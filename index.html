@@ -4,20 +4,155 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PlugNation</title>
+
+  <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 60px 20px;
+      background: #f5f7fa;
+    }
+
+    h1 {
+      font-size: 36px;
+    }
+
+    p {
+      font-size: 18px;
+      line-height: 1.5;
+    }
+
+    button {
+      padding: 15px 30px;
+      font-size: 18px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    #status {
+      margin-top: 25px;
+      font-weight: bold;
+    }
+  </style>
 </head>
 
 <body>
+
   <h1>Welcome to PlugNation</h1>
 
-  <p>Your gateway to products and services in the Pi ecosystem.</p>
-
-  <h2>Coming Soon</h2>
-
   <p>
-    PlugNation is being developed as a marketplace where businesses
-    can connect with customers and offer products and services.
+    Your gateway to products and services within the Pi ecosystem.
   </p>
 
-  <p>Powered by Pi.</p>
+  <p>
+    Test our Pi payment system below.
+  </p>
+
+  <button id="payButton">Pay 0.01 Test-Pi</button>
+
+  <div id="status"></div>
+
+  <script>
+    Pi.init({
+      version: "2.0",
+      sandbox: true
+    });
+
+    let currentPaymentId = null;
+
+    async function authenticate() {
+      return await Pi.authenticate(
+        ["payments"],
+        function onIncompletePaymentFound(payment) {
+          console.log("Incomplete payment:", payment);
+        }
+      );
+    }
+
+    document.getElementById("payButton").addEventListener("click", async function () {
+
+      const status = document.getElementById("status");
+
+      try {
+        status.innerText = "Connecting to Pi...";
+
+        await authenticate();
+
+        status.innerText = "Opening Pi payment...";
+
+        const payment = await Pi.createPayment({
+          amount: 0.01,
+          memo: "PlugNation Test Purchase",
+          metadata: {
+            productId: "test-001"
+          }
+        }, {
+          onReadyForServerApproval: async function(paymentId) {
+
+            currentPaymentId = paymentId;
+
+            const response = await fetch(
+              "https://plugnation-lab-github-io.vercel.app/api/approve",
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                  paymentId: paymentId
+                })
+              }
+            );
+
+            if (!response.ok) {
+              throw new Error("Payment approval failed");
+            }
+          },
+
+          onReadyForServerCompletion: async function(paymentId, txid) {
+
+            const response = await fetch(
+              "https://plugnation-lab-github-io.vercel.app/api/complete",
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                  paymentId: paymentId,
+                  txid: txid
+                })
+              }
+            );
+
+            if (!response.ok) {
+              throw new Error("Payment completion failed");
+            }
+
+            status.innerText = "Payment completed successfully!";
+          },
+
+          onCancel: function(paymentId) {
+            status.innerText = "Payment cancelled.";
+          },
+
+          onError: function(error, payment) {
+            console.error(error);
+            status.innerText = "Payment error. Please try again.";
+          }
+        });
+
+        console.log("Payment:", payment);
+
+      } catch (error) {
+        console.error(error);
+        status.innerText = "Something went wrong. Please try again.";
+      }
+    });
+  </script>
+
 </body>
 </html>
