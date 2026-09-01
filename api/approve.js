@@ -1,15 +1,14 @@
-export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
-  }
-
-  const { paymentId } = req.body;
-
-  if (!paymentId) {
-    return res.status(400).json({ error: "Missing paymentId" });
-  }
-
+export async function POST(request) {
   try {
+    const { paymentId } = await request.json();
+
+    if (!paymentId) {
+      return Response.json(
+        { error: "Missing paymentId" },
+        { status: 400 }
+      );
+    }
+
     const response = await fetch(
       `https://api.minepi.com/v2/payments/${paymentId}/approve`,
       {
@@ -23,8 +22,33 @@ export default async function handler(req, res) {
 
     const data = await response.json();
 
-    return res.status(response.status).json(data);
+    return Response.json(data, {
+      status: response.status,
+      headers: {
+        "Access-Control-Allow-Origin": "https://plugnation-lab.github.io"
+      }
+    });
+
   } catch (error) {
-    return res.status(500).json({ error: "Server error" });
+    return Response.json(
+      { error: "Server error" },
+      {
+        status: 500,
+        headers: {
+          "Access-Control-Allow-Origin": "https://plugnation-lab.github.io"
+        }
+      }
+    );
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, {
+    status: 204,
+    headers: {
+      "Access-Control-Allow-Origin": "https://plugnation-lab.github.io",
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type"
+    }
+  });
 }
