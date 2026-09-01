@@ -1,7 +1,10 @@
 {
   "functions": {
-    "api/*.js": {
-      "runtime": "nodejs20.x"
+    "api/approve.js": {
+      "runtime": "nodejs22.x"
+    },
+    "api/complete.js": {
+      "runtime": "nodejs22.x"
     }
   }
 }
