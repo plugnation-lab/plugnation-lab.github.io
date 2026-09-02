@@ -64,13 +64,44 @@
     let currentPaymentId = null;
 
     async function authenticate() {
-      return await Pi.authenticate(
-        ["payments"],
-        function onIncompletePaymentFound(payment) {
-          console.log("Incomplete payment:", payment);
+  return await Pi.authenticate(
+    ["payments"],
+    async function onIncompletePaymentFound(payment) {
+      console.log("Incomplete payment:", payment);
+
+      try {
+        const paymentId =
+          payment.identifier ||
+          payment.paymentId ||
+          payment.id;
+
+        const txid =
+          payment.transaction?.txid ||
+          payment.transaction?.txID;
+
+        if (paymentId && txid) {
+          await fetch(
+            "https://plugnation-lab-github-io.vercel.app/api/complete",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify({
+                paymentId,
+                txid
+              })
+            }
+          );
+
+          console.log("Recovered pending payment");
         }
-      );
+      } catch (err) {
+        console.error("Recovery failed:", err);
+      }
     }
+  );
+}
 
     document.getElementById("payButton").addEventListener("click", async function () {
 
