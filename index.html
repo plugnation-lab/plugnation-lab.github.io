@@ -67,7 +67,8 @@
   return await Pi.authenticate(
     ["payments"],
     async function onIncompletePaymentFound(payment) {
-      console.log("Incomplete payment:", payment);
+      alert("Incomplete payment: " + JSON.stringify(payment));
+console.log("Incomplete payment:", payment);
 
       try {
         const paymentId =
