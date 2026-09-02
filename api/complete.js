@@ -5,7 +5,12 @@ export async function POST(request) {
     if (!paymentId || !txid) {
       return Response.json(
         { error: "Missing paymentId or txid" },
-        { status: 400 }
+        {
+          status: 400,
+          headers: {
+            "Access-Control-Allow-Origin": "https://plugnation-lab.github.io"
+          }
+        }
       );
     }
 
@@ -24,13 +29,32 @@ export async function POST(request) {
     const data = await response.json();
 
     return Response.json(data, {
-      status: response.status
+      status: response.status,
+      headers: {
+        "Access-Control-Allow-Origin": "https://plugnation-lab.github.io"
+      }
     });
 
   } catch (error) {
     return Response.json(
       { error: "Server error" },
-      { status: 500 }
+      {
+        status: 500,
+        headers: {
+          "Access-Control-Allow-Origin": "https://plugnation-lab.github.io"
+        }
+      }
     );
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, {
+    status: 204,
+    headers: {
+      "Access-Control-Allow-Origin": "https://plugnation-lab.github.io",
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type"
+    }
+  });
 }
